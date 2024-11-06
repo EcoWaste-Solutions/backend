@@ -10,7 +10,12 @@ from image import image_to_base64
 from fastapi import File, UploadFile
 import shutil
 
+
+import uuid
+from datetime import datetime, timedelta
+
 import base64
+
 from fastapi import Form
 
 
@@ -95,3 +100,70 @@ def signin(
 
     tokenData = schemas.Token(accessToken=access_token, token_type="Bearer")
     return tokenData
+
+@router.post("/forgotPassword")
+def forgotPassword(
+    cred: schemas.ForgotPassword,
+    db: Session = Depends(database.get_db)
+):
+    email = cred.email
+    user = db.query(models.User).filter(models.User.email == email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="NOTFOUND")
+    
+    otp = str(uuid.uuid4().int)[:6]
+    expriesAt = datetime.now() + timedelta(minutes=30)
+
+
+    passwordReset = models.ForgotPassword(
+        email=email,
+        token=otp,
+        expriesAt=expriesAt
+    )
+
+
+    db.add(passwordReset)
+
+    db.commit()
+    utils.sendEmail(
+        "Password Reset",
+        f"Hello {user.name}, Your password reset otp is {otp}.",
+        user.email
+    )
+
+
+    return {"message": "SUCCESS"}
+
+
+
+@router.post("/resetPassword/{otp}")
+def resetPassword(
+    otp: str,
+    cred: schemas.ResetPassword,
+    db: Session = Depends(database.get_db)
+):
+    password = cred.password
+    passwordReset = db.query(models.ForgotPassword).filter(models.ForgotPassword.token == otp).first()
+
+    if not passwordReset:
+        raise HTTPException(status_code=404, detail="NOTFOUND")
+    
+    if datetime.now() > passwordReset.expriesAt:
+        raise HTTPException(status_code=400, detail="EXPIRED")
+
+    user = db.query(models.User).filter(models.User.email == passwordReset.email).first()
+
+    user.password = utils.hash(password)
+
+    # Delete the password reset token
+    db.delete(passwordReset)
+    db.commit()
+
+    utils.sendEmail(
+        "Password Reset",
+        f"Hello {user.name}, Your password has been reset successfully.",
+        user.email
+    )
+
+    return {"message": "SUCCESS"}

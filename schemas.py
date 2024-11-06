@@ -73,3 +73,14 @@ class ReportWasteResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class pushNotification(BaseModel):
+    title: str
+    message: str
+    token: str
+
+class ForgotPassword(BaseModel):
+    email:str
+
+class ResetPassword(BaseModel):
+    password: str

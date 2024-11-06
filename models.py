@@ -44,7 +44,11 @@ class ReportWaste(Base):
     
 
 
-
+class ForgotPassword(Base):
+    __tablename__ = "forgotPassword"
+    email = Column(String, ForeignKey("users.email"), primary_key=True)
+    token = Column(String, unique=True, index=True)
+    expriesAt = Column(DateTime)
 
 
 
