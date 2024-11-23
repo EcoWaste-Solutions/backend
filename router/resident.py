@@ -19,6 +19,9 @@ from typing import List
 
 import factory
 
+import utils
+import observer
+
 router = APIRouter(tags=["Resident"], prefix="/resident")
 
 
@@ -94,10 +97,18 @@ def reportWaste(
     db.commit()
     db.refresh(reportWaste)
 
-    utils.sendEmail(
-        "Waste Reported",
-        f"Your waste report has been received. You will be rewarded with 10 points.",
-        currentUser.email,
+    
+    auth_subject = observer.AuthSubject()
+    email_observer = observer.EmailNotificationObserver(currentUser.email)
+    audit_log_observer = observer.AuditLogObserver()
+
+    auth_subject.add_observer(email_observer)
+    auth_subject.add_observer(audit_log_observer)
+    
+
+    auth_subject.notify_observers(
+        subject="Report Waste",
+        body=f"Hello {currentUser.name}, Your waste has been reported successfully",
     )
 
     return reportWasteResponse
