@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from email.message import EmailMessage
 import ssl
 import smtplib
-# import config
+from config import settings 
 
 
 pwdContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -24,11 +24,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 # settings = config.Settings()  # Create an instance of the Settings class
-emailSender = "dibbyoroy7@gmail.com"
-emailPassword = "iuug vgbn wkew srpu"
-
-
-
+emailSender = settings.email_sender
+emailPassword = settings.email_password
 
 def hash(password: str):
     return pwdContext.hash(password)
