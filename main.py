@@ -2,19 +2,16 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-
 import models
 import utils
 from database import engine
 
-from router import auth, resident
+from router import auth, resident, admin
 
-import config
+# import config
 
 
 models.Base.metadata.create_all(bind=engine)
-
-
 
 app = FastAPI()
 
@@ -33,5 +30,6 @@ app.include_router(auth.router)
 
 app.include_router(resident.router)
 
+app.include_router(admin.router)
 
 

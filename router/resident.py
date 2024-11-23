@@ -67,14 +67,16 @@ def reportWaste(
         raise HTTPException(
             status_code=401, detail="UNAUTHORIZED"
         )
-
-    if db.query(models.User).filter(models.User.email != currentUser.email).first():
-        raise HTTPException(
-            status_code=400, detail="EMAILERROR"
-        )
-
+    
     user = db.query(models.Resident).filter(
         models.Resident.email == currentUser.email).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=404, detail="USERNOTFOUND"
+        )
+    
+    
 
     if user:
         user.reward += 10

@@ -93,6 +93,7 @@ def signin(
     
     if not utils.verify(credential.password, user.password):
         raise HTTPException(status_code=404, detail="PASSWORDERROR")
+    print(user.role)
 
 
     access_token = oauth2.createAccessToken(

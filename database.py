@@ -1,11 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import config
 
 
-sqlAlchemyDatabaseUrl = "postgresql://postgres:iam4yearsold@localhost/wasteManagement"
 
+# sqlAlchemyDatabaseUrl = "postgresql://postgres:iam4yearsold@localhost/wasteManagement"
+sqlAlchemyDatabaseUrl = "postgresql://postgres:iam4yearsold@localhost:5432/wasteManagement"
 
 
 # sqlAlchemyDatabaseUrl = f"postgresql://{config.Settings.database_username}:{config.Settings.database_password}@{config.Settings.database_hostname}/{config.Settings.database_name}"
@@ -23,3 +23,4 @@ def get_db():
         yield db
     finally:
         db.close()
+        
