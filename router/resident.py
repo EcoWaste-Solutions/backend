@@ -17,79 +17,68 @@ from fastapi import Form
 
 from typing import List
 
+import factory
 
-router = APIRouter(
-    tags=["Resident"],
-    prefix="/resident"
-)
+router = APIRouter(tags=["Resident"], prefix="/resident")
 
 
 @router.get("/getProfile", status_code=200, response_model=schemas.ResidentProfile)
 def getProfile(
-    db: Session = Depends(database.get_db),
-    currentUser=Depends(oauth2.getCurrentUser)
+    db: Session = Depends(database.get_db), currentUser=Depends(oauth2.getCurrentUser)
 ):
     if currentUser.role != "RESIDENT":
-        raise HTTPException(
-            status_code=401, detail="UNAUTHORIZED"
-        )
+        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
 
-    user = db.query(models.User).filter(
-        models.User.email == currentUser.email).first()
+    user = db.query(models.User).filter(models.User.email == currentUser.email).first()
 
     if not user:
-        raise HTTPException(
-            status_code=404, detail="USERNOTFOUND"
-        )
-    
-    resident = db.query(models.Resident).filter(
-        models.Resident.email == currentUser.email).first()
-    
+        raise HTTPException(status_code=404, detail="USERNOTFOUND")
+
+    resident = (
+        db.query(models.Resident)
+        .filter(models.Resident.email == currentUser.email)
+        .first()
+    )
+
     response = schemas.ResidentProfile(
         email=user.email,
         phone=user.phone,
         name=user.name,
         reward=resident.reward,
         image=user.image,
-        address=user.address
+        address=user.address,
     )
 
     return response
 
 
-@router.post("/reportWaste", status_code=201, response_model=schemas.ReportWasteResponse)
+@router.post(
+    "/reportWaste", status_code=201, response_model=schemas.ReportWasteResponse
+)
 def reportWaste(
     report: schemas.ReportWaste,
     db: Session = Depends(database.get_db),
-    currentUser=Depends(oauth2.getCurrentUser)
+    currentUser=Depends(oauth2.getCurrentUser),
 ):
     if currentUser.role != "RESIDENT":
-        raise HTTPException(
-            status_code=401, detail="UNAUTHORIZED"
-        )
-    
-    user = db.query(models.Resident).filter(
-        models.Resident.email == currentUser.email).first()
-    
+        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
+
+    user = (
+        db.query(models.Resident)
+        .filter(models.Resident.email == currentUser.email)
+        .first()
+    )
+
     if not user:
-        raise HTTPException(
-            status_code=404, detail="USERNOTFOUND"
-        )
-    
-    
+        raise HTTPException(status_code=404, detail="USERNOTFOUND")
 
     if user:
         user.reward += 10
         db.commit()
         db.refresh(user)
 
-    reportWaste = models.ReportWaste(
-        email=currentUser.email,
-        description=report.description,
-        location=report.location,
-        status="PENDING",
-        image=[url for url in report.image],
-        reward=10
+    reportWaste = factory.ReportWasteFactory.createReportWaste(
+        report, currentUser.email
     )
 
     reportWasteResponse = schemas.ReportWasteResponse(
@@ -98,7 +87,7 @@ def reportWaste(
         status=reportWaste.status,
         date=datetime.now().date(),  # Ensure only the date part is used
         image=reportWaste.image,
-        reward=reportWaste.reward
+        reward=reportWaste.reward,
     )
 
     db.add(reportWaste)
@@ -108,7 +97,7 @@ def reportWaste(
     utils.sendEmail(
         "Waste Reported",
         f"Your waste report has been received. You will be rewarded with 10 points.",
-        currentUser.email
+        currentUser.email,
     )
 
     return reportWasteResponse
@@ -116,15 +105,15 @@ def reportWaste(
 
 @router.get("/getReports", status_code=200)
 def getReports(
-    db: Session = Depends(database.get_db),
-    currentUser=Depends(oauth2.getCurrentUser)
+    db: Session = Depends(database.get_db), currentUser=Depends(oauth2.getCurrentUser)
 ):
     if currentUser.role != "RESIDENT":
-        raise HTTPException(
-            status_code=401, detail="UNAUTHORIZED"
-        )
+        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
 
-    reports = db.query(models.ReportWaste).filter(
-        models.ReportWaste.email == currentUser.email).all()
+    reports = (
+        db.query(models.ReportWaste)
+        .filter(models.ReportWaste.email == currentUser.email)
+        .all()
+    )
 
     return [reports]

@@ -10,6 +10,8 @@ from image import image_to_base64
 from fastapi import File, UploadFile
 import shutil
 
+import factory
+
 
 import uuid
 from datetime import datetime, timedelta
@@ -26,6 +28,7 @@ router = APIRouter(
 
 
 @router.post("/signup", status_code=201)
+
 def signup(
     resident: schemas.ResidentSignup,
     db: Session = Depends(database.get_db)
@@ -40,30 +43,15 @@ def signup(
     # Convert image to Base64
 
     # Prepare phone number
-    phone = "+88" + resident.phone
 
     # Create user in the database
-    user = models.User(
-        email=resident.email,
-        phone=phone,
-        name=resident.name,
-        password=utils.hash(resident.password),
-        role="RESIDENT",
-        userName=userName,
-        address=resident.address,
-        image=resident.image, 
-
-    )
+    user = factory.UserFactory.createUser(resident)
 
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    res = models.Resident(
-        email=resident.email,
-        phone=phone,
-        name=resident.name,
-    )
+    res = factory.ResidentFactory.createResident(resident)
     db.add(res)
     db.commit()
     db.refresh(res)
@@ -74,9 +62,9 @@ def signup(
         f"Hello {resident.name}, Welcome to our platform. Your username is {userName}.",
         resident.email
     )
+    utils.sendEmail("Welcome to our platform", f"Hello {resident.name}, Welcome to our platform. Your username is {user.userName}.", resident.email)
 
     return {"message": "SUCCESS"}
-
 
 
 
