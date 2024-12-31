@@ -26,8 +26,6 @@ from fastapi import Form
 router = APIRouter(tags=["Authentication"])
 
 
-
-
 @router.post("/signup", status_code=201)
 def signup(resident: schemas.ResidentSignup, db: Session = Depends(database.get_db)):
     # Check if user already exists
@@ -51,7 +49,6 @@ def signup(resident: schemas.ResidentSignup, db: Session = Depends(database.get_
     db.refresh(res)
 
     auth_subject = observer.AuthSubject()
-
 
     # Send welcome email
 
@@ -121,7 +118,7 @@ def forgotPassword(
     db.add(passwordReset)
 
     db.commit()
-    
+
     auth_subject = observer.AuthSubject()
 
     email_observer = observer.EmailNotificationObserver(user.email)
@@ -134,7 +131,6 @@ def forgotPassword(
         subject="Password Reset",
         body=f"Hello {user.name}, Your password reset token is {otp}",
     )
-
 
     return {"message": "SUCCESS"}
 
@@ -178,6 +174,5 @@ def resetPassword(
         subject="Password Reset",
         body=f"Hello {user.name}, Your password has been successfully reset",
     )
-    
 
     return {"message": "SUCCESS"}

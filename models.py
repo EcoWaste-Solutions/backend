@@ -1,4 +1,3 @@
-
 from xmlrpc.client import Boolean
 from database import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, BOOLEAN, Text
@@ -8,7 +7,6 @@ from datetime import datetime, timedelta
 from sqlalchemy import DateTime
 
 from sqlalchemy.dialects.postgresql import ARRAY
-
 
 
 class User(Base):
@@ -22,12 +20,14 @@ class User(Base):
     address = Column(String)
     image = Column(String)
 
+
 class Resident(Base):
     __tablename__ = "residents"
     email = Column(String, ForeignKey("users.email"), primary_key=True)
     phone = Column(String)
     name = Column(String)
     reward = Column(Integer, default=0)
+
 
 class ReportWaste(Base):
     __tablename__ = "reportWaste"
@@ -39,9 +39,6 @@ class ReportWaste(Base):
     date = Column(DateTime, default=datetime.now())
     image = Column(ARRAY(String), nullable=False)
     reward = Column(Integer)
-    
-
-    
 
 
 class ForgotPassword(Base):
@@ -49,7 +46,3 @@ class ForgotPassword(Base):
     email = Column(String, ForeignKey("users.email"), primary_key=True)
     token = Column(String, unique=True, index=True)
     expriesAt = Column(DateTime)
-
-
-
-
