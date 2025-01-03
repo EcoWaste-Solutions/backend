@@ -62,6 +62,11 @@ class ReportWaste(BaseModel):
     class Config:
         orm_mode = True
 
+class Only_image(BaseModel):
+    image: str
+
+    class Config:
+        orm_mode = True
 
 class ReportWasteResponse(BaseModel):
     description: str

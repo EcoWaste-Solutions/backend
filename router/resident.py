@@ -58,6 +58,24 @@ def getProfile(
     )
 
     return response
+@router.post("/getDescription", status_code=201) 
+def getDescription(
+    img: schemas.Only_image,
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(oauth2.getCurrentUser),
+):
+    if currentUser.role != "RESIDENT":
+        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
+    response = requests.get(img.image)
+    response.raise_for_status()
+    image_data = base64.b64encode(response.content).decode("utf-8")
+    waste_details = processImg.process_image(image_data)
+    description = waste_details  # Use AI-generated waste details as description
+    return description
+
+
+    # Retrieve the user from the database
+    
 
 @router.post(
     "/reportWaste/{desc}",
