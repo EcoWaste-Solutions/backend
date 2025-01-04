@@ -78,12 +78,11 @@ def getDescription(
     
 
 @router.post(
-    "/reportWaste/{desc}",
+    "/reportWaste/",
     status_code=201,
     response_model=schemas.ReportWasteResponse,
 )
-def reportWaste(
-    desc: str,  # path parameter to control description logic
+def reportWaste(  # path parameter to control description logic
     report: schemas.ReportWaste,  # report data, including the image URL
     db: Session = Depends(database.get_db),
     currentUser=Depends(oauth2.getCurrentUser),
@@ -103,30 +102,14 @@ def reportWaste(
     db.refresh(user)
 
     # Determine the description source based on the `desc` parameter
-    if desc == "1":
-        # Fetch and process the image to extract waste description using AI
-        image_url = report.image[0]  # Assuming image is a list of URLs or file paths
-        try:
-            # Fetch the image data (from URL or file system)
-            response = requests.get(image_url)
-            response.raise_for_status()
-            image_data = base64.b64encode(response.content).decode("utf-8")
-        except requests.exceptions.RequestException as e:
-            raise HTTPException(status_code=400, detail=f"Failed to fetch image: {str(e)}")
-        
-        # Process the image and get the waste description
-        waste_details = processImg.process_image(image_data)
-        description = waste_details  # Use AI-generated waste details as description
-    else:
-        # Use the custom description provided in the report
-        description = report.description
+    
 
     # Create the report entry
     reportWaste = factory.ReportWasteFactory.createReportWaste(report, currentUser.email)
 
     # Prepare the response data
     reportWasteResponse = schemas.ReportWasteResponse(
-        description=description,
+        description=reportWaste.description,
         location=reportWaste.location,
         status=reportWaste.status,
         date=datetime.now().date(),
