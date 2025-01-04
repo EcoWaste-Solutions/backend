@@ -17,12 +17,20 @@ app = FastAPI()
 
 manager = utils.connectionManager()
 
+
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://inventory.alvereduan.com"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins, # Allows all origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"], # Allows all methods
+    allow_headers=["*"], # Allows all headers
 )
     
 
@@ -35,6 +43,7 @@ app.include_router(admin.router)
 app.include_router(leaderBoard.router)
 
 app.include_router(start.router)
+
 
 
 
