@@ -5,10 +5,8 @@ import oauth2
 import database
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
-from image import image_to_base64
 
 from fastapi import File, UploadFile
-import shutil
 
 from datetime import datetime
 
@@ -152,3 +150,39 @@ def getReports(
     )
 
     return [reports]
+
+
+@router.put("/editProfile", status_code=201)
+def editProfile(
+    edit: schemas.UserEditProfile,
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(oauth2.getCurrentUser),
+):
+    if currentUser.role != "RESIDENT":
+        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
+
+    user = db.query(models.User).filter(models.User.email == currentUser.email).first()
+
+    user.name = edit.name
+    user.phone = edit.phone
+    user.address = edit.address
+    user.image = edit.image
+
+    db.commit()
+    db.refresh(user)
+
+    auth_subject = observer.AuthSubject()
+
+    email_observer = observer.EmailNotificationObserver(user.email)
+    audit_log_observer = observer.AuditLogObserver()
+
+    auth_subject.add_observer(email_observer)
+    auth_subject.add_observer(audit_log_observer)
+
+    auth_subject.notify_observers(
+        subject="Profile Updated",
+        body=f"Profile updated successfully!",
+    )
+
+    return {"message": "SUCCESS"}
+

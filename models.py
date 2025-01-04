@@ -9,6 +9,8 @@ from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
 
 
+
+
 class User(Base):
     __tablename__ = "users"
     email = Column(String, unique=True, index=True, primary_key=True)
@@ -46,3 +48,7 @@ class ForgotPassword(Base):
     email = Column(String, ForeignKey("users.email"), primary_key=True)
     token = Column(String, unique=True, index=True)
     expriesAt = Column(DateTime)
+
+class Start(Base):
+    __tablename__ = "start"
+    flag = Column(BOOLEAN, default=False, primary_key=True)
