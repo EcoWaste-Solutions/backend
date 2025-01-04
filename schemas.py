@@ -97,3 +97,13 @@ class ResetPassword(BaseModel):
 class LeaderBoard(BaseModel):
     name: str
     reward: int
+
+
+class UserEditProfile(BaseModel):
+    name: str
+    phone: str
+    address: str
+    image: str
+
+    class Config:
+        orm_mode = True

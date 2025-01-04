@@ -6,7 +6,7 @@ import models
 import utils
 from database import engine
 
-from router import auth, resident, admin, leaderBoard
+from router import auth, resident, admin, leaderBoard, start
 
 # import config
 
@@ -33,6 +33,8 @@ app.include_router(resident.router)
 app.include_router(admin.router)
 
 app.include_router(leaderBoard.router)
+
+app.include_router(start.router)
 
 
 

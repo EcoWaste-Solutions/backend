@@ -5,7 +5,6 @@ import oauth2
 import database
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
-from image import image_to_base64
 
 from fastapi import File, UploadFile
 import shutil
