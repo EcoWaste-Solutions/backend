@@ -48,15 +48,3 @@ class ForgotPassword(Base):
 
 
 
-class RecycleInfo(Base):
-    __tablename__ = "recycleInfo"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    waste_type = Column(String, nullable=False)  # "mixed waste (plastic, paper, organic, metal)"
-    quantity = Column(String, nullable=False)    # "approximately 5000 kg"
-    unit = Column(String, nullable=False)        # "kg" or "liters"
-    confidence = Column(Float, nullable=False)   # 0.85
-    description = Column(Text, nullable=True)    # "The image shows a large landfill..."
-    location = Column(String, nullable=True)     # Optional for specific geographical details
-    image = Column(ARRAY(String), nullable=True) # To store image URLs if necessary
-    reported_at = Column(DateTime, default=datetime.utcnow)  # Ti
-    user_email = Column(String, ForeignKey("users.email"), nullable=False)
