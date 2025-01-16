@@ -108,3 +108,14 @@ class UserEditProfile(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class Collector(BaseModel):
+    email: str
+    phone: str
+    name: str
+    address: str
+    image: str
+
+    class Config:
+        orm_mode = True

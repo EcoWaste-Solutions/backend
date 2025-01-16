@@ -48,3 +48,10 @@ class ForgotPassword(Base):
 
 
 
+class Collector(Base):
+    __tablename__ = "collectors"
+    email = Column(String, ForeignKey("users.email"), primary_key=True)
+    phone = Column(String)
+    name = Column(String)
+    reward = Column(Integer, default=0)
+    isAvailable = Column(Boolean, default=True)
