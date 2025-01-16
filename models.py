@@ -1,14 +1,11 @@
-from xmlrpc.client import Boolean
-from database import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, BOOLEAN, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
-
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy import DateTime
-
 from sqlalchemy.dialects.postgresql import ARRAY
+from database import Base
 
-
+from sqlalchemy import Float
 
 
 class User(Base):
@@ -38,7 +35,7 @@ class ReportWaste(Base):
     description = Column(String)
     location = Column(String)
     status = Column(String)
-    date = Column(DateTime, default=datetime.now())
+    date = Column(DateTime, default=datetime.utcnow)  # Changed to datetime.utcnow
     image = Column(ARRAY(String), nullable=False)
     reward = Column(Integer)
 
@@ -49,6 +46,17 @@ class ForgotPassword(Base):
     token = Column(String, unique=True, index=True)
     expriesAt = Column(DateTime)
 
-class Start(Base):
-    __tablename__ = "start"
-    flag = Column(BOOLEAN, default=False, primary_key=True)
+
+
+class RecycleInfo(Base):
+    __tablename__ = "recycleInfo"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    waste_type = Column(String, nullable=False)  # "mixed waste (plastic, paper, organic, metal)"
+    quantity = Column(String, nullable=False)    # "approximately 5000 kg"
+    unit = Column(String, nullable=False)        # "kg" or "liters"
+    confidence = Column(Float, nullable=False)   # 0.85
+    description = Column(Text, nullable=True)    # "The image shows a large landfill..."
+    location = Column(String, nullable=True)     # Optional for specific geographical details
+    image = Column(ARRAY(String), nullable=True) # To store image URLs if necessary
+    reported_at = Column(DateTime, default=datetime.utcnow)  # Ti
+    user_email = Column(String, ForeignKey("users.email"), nullable=False)

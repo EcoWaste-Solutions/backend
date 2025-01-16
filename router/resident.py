@@ -56,7 +56,9 @@ def getProfile(
     )
 
     return response
-@router.post("/getDescription", status_code=201) 
+
+
+@router.post("/getDescription", status_code=201)
 def getDescription(
     img: schemas.Only_image,
     db: Session = Depends(database.get_db),
@@ -69,11 +71,11 @@ def getDescription(
     image_data = base64.b64encode(response.content).decode("utf-8")
     waste_details = processImg.process_image(image_data)
     description = waste_details  # Use AI-generated waste details as description
+
     return description
 
-
     # Retrieve the user from the database
-    
+
 
 @router.post(
     "/reportWaste/",
@@ -89,7 +91,11 @@ def reportWaste(  # path parameter to control description logic
         raise HTTPException(status_code=401, detail="UNAUTHORIZED")
 
     # Retrieve the user from the database
-    user = db.query(models.Resident).filter(models.Resident.email == currentUser.email).first()
+    user = (
+        db.query(models.Resident)
+        .filter(models.Resident.email == currentUser.email)
+        .first()
+    )
 
     if not user:
         raise HTTPException(status_code=404, detail="USER NOT FOUND")
@@ -100,10 +106,11 @@ def reportWaste(  # path parameter to control description logic
     db.refresh(user)
 
     # Determine the description source based on the `desc` parameter
-    
 
     # Create the report entry
-    reportWaste = factory.ReportWasteFactory.createReportWaste(report, currentUser.email)
+    reportWaste = factory.ReportWasteFactory.createReportWaste(
+        report, currentUser.email
+    )
 
     # Prepare the response data
     reportWasteResponse = schemas.ReportWasteResponse(
@@ -120,6 +127,28 @@ def reportWaste(  # path parameter to control description logic
     db.commit()
     db.refresh(reportWaste)
 
+    response = requests.get(report.image[0])
+    response.raise_for_status()
+    image_data = base64.b64encode(response.content).decode("utf-8")
+    waste_details = processImg.process_image(image_data)
+    description = waste_details
+    
+    recycle = models.RecycleInfo(
+        waste_type=description["wasteType"],
+        quantity=description["quantity"],
+        unit=description["unit"],
+        confidence=description["confidence"],
+        description=description["other"],
+        location=reportWaste.location,
+        image=[report.image],
+        user_email=currentUser.email,
+    )
+
+    db.add(recycle)
+    db.commit()
+    db.refresh(recycle)
+    
+   
     # Notify observers
     auth_subject = observer.AuthSubject()
     email_observer = observer.EmailNotificationObserver(currentUser.email)
@@ -185,4 +214,3 @@ def editProfile(
     )
 
     return {"message": "SUCCESS"}
-

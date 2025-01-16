@@ -34,9 +34,11 @@ prompt = """You are an expert in waste management and recycling. Analyze this im
         
         Respond in JSON format like this:
         {
-          "wasteType": "type of waste",
-          "quantity": "estimated quantity with unit",
+          "wasteType": "type of waste. e.g., plastic, paper, glass, metal, organic(only type seperated by comma)",
+          "quantity": "estimated quantity. e.g., 5 , 10 (only digits)",
+          "unit": "unit of quantity. e.g., kg, liters",
           "confidence": confidence level as a number between 0 and 1
+          "categuryPercentage": "percentage of waste type in the image. e.g., 50, 30 (only digits)",
           "other": "any other relevant information"
         }"""
 def encode_image(image_path):
@@ -82,31 +84,41 @@ def extract_text(image_data):
 
 # Encode the image to base64
 
-
 # Print the extracted text
-def parse_image_details(extracted_text: str) -> str:
+def parse_image_details(extracted_text: str) -> dict:
     # Example parsing logic; this could be more advanced depending on the format of the extracted text
     lines = extracted_text.split("\n")
-    recipe_name = lines[0]  # Assuming first line is the recipe name
-    ingredients = "\n".join([line for line in lines if line.startswith("-")])  # Simple ingredient parsing
-    steps = "\n".join([line for line in lines if not line.startswith("-") and line != ""])  # Steps are non-ingredient lines
 
-    
     wasteType = ""
     quantity = ""
+    unit = ""
     confidence = ""
     other = ""
+    categoryPercentage = ""
     for line in lines:
         if "wasteType" in line:
-            wasteType = line.split(":")[1].strip()
+            wasteType = line.split(":")[1].strip().strip('",')
         if "quantity" in line:
-            quantity = line.split(":")[1].strip()
+            quantity = line.split(":")[1].strip().strip('",')
+        if "unit" in line:
+            unit = line.split(":")[1].strip().strip('",')
         if "confidence" in line:
-            confidence = line.split(":")[1].strip()
+            confidence = line.split(":")[1].strip().strip('",')
         if "other" in line:
-            other = line.split(":")[1].strip()
+            other = line.split(":")[1].strip().strip('",')
+        if "categuryPercentage" in line:
+            categoryPercentage = line.split(":")[1].strip().strip('",')
+
+        
     
-    return f"Waste Type: {wasteType}\nQuantity: {quantity}\nConfidence: {confidence}\nOther: {other}"
+    return {
+        "wasteType": [x.strip() for x in wasteType.split(",")],
+        "quantity": int(quantity),
+        "unit": unit,
+        "confidence": confidence,
+        "other": other,
+        "categoryPercentage": [int(x) for x in categoryPercentage.split(",")]
+    }
 def process_image(image_data):
    
     extracted_text = extract_text(image_data)

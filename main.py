@@ -6,12 +6,12 @@ import models
 import utils
 from database import engine
 
-from router import auth, resident, admin, leaderBoard, start
+from router import auth, resident, admin, leaderBoard
 
 # import config
 
 
-models.Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
@@ -42,7 +42,6 @@ app.include_router(admin.router)
 
 app.include_router(leaderBoard.router)
 
-app.include_router(start.router)
 
 
 

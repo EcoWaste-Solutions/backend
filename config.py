@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     email_sender: str
     email_password: str
     api_key: str
+    database_url_for_local: str
+    database_url_for_docker: str
 
     class Config:
         env_file = ".env"  # Load environment variables from the .env file
