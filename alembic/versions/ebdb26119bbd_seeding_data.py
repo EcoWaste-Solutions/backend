@@ -1,20 +1,19 @@
 """seeding data
 
-Revision ID: d510c8b780d2
-Revises: 3eabd8ab4ac7
-Create Date: 2025-01-15 14:51:03.175980
+Revision ID: ebdb26119bbd
+Revises: 332118a6aa59
+Create Date: 2025-01-17 01:20:51.655434
 
 """
-
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-
+from utils import hash
 
 # revision identifiers, used by Alembic.
-revision: str = "d510c8b780d2"
-down_revision: Union[str, None] = "3eabd8ab4ac7"
+revision: str = 'ebdb26119bbd'
+down_revision: Union[str, None] = '332118a6aa59'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -39,7 +38,7 @@ def upgrade() -> None:
                 "email": "dibbyoroy7@gmail.com",
                 "phone": "1234567890",
                 "name": "Dibbyo Roy",
-                "password": "1234",
+                "password": hash("1234"),
                 "role": "ADMIN",
                 "userName": "dibbyoroy7",
                 "address": "Kolkata",
@@ -76,5 +75,3 @@ def downgrade() -> None:
 
     op.execute("DELETE FROM users WHERE email = 'dibbyoroy7@gmail.com'")
     op.execute("DELETE FROM residents WHERE email = 'dibbyoroy7@gmail.com'")
-
-    # ### end Alembic commands ###

@@ -127,26 +127,7 @@ def reportWaste(  # path parameter to control description logic
     db.commit()
     db.refresh(reportWaste)
 
-    response = requests.get(report.image[0])
-    response.raise_for_status()
-    image_data = base64.b64encode(response.content).decode("utf-8")
-    waste_details = processImg.process_image(image_data)
-    description = waste_details
     
-    recycle = models.RecycleInfo(
-        waste_type=description["wasteType"],
-        quantity=description["quantity"],
-        unit=description["unit"],
-        confidence=description["confidence"],
-        description=description["other"],
-        location=reportWaste.location,
-        image=[report.image],
-        user_email=currentUser.email,
-    )
-
-    db.add(recycle)
-    db.commit()
-    db.refresh(recycle)
     
    
     # Notify observers
