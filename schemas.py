@@ -47,6 +47,7 @@ class ResidentSignup(BaseModel):
     password: str
     address: str
     image: str
+    role: str
 
 
 class Signin(BaseModel):

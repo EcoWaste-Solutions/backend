@@ -16,7 +16,7 @@ class UserFactory:
             email=resident.email,
             phone=resident.phone,
             name=resident.name,
-            role="RESIDENT",
+            role=resident.role,
             image=resident.image,
             address=resident.address,
             userName=utils.createUserName(resident.name),
