@@ -27,14 +27,14 @@ from middileware import checkingRole
 
 import processImg
 
+from pydantic import BaseModel, EmailStr
+
 
 @router.get("/getProfile", status_code=200, response_model=schemas.ResidentProfile)
 def getProfile(
-    db: Session = Depends(database.get_db), currentUser=Depends(oauth2.getCurrentUser)
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(checkingRole("COLLECTOR")),
 ):
-    if currentUser.role != "COLLECTOR":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
-
     user = db.query(models.User).filter(models.User.email == currentUser.email).first()
 
     if not user:
@@ -56,50 +56,14 @@ def getProfile(
     )
 
     return response
-# @router.put("/editProfile", status_code=201)
-# def editProfile(
-#     edit: schemas.UserEditProfile,
-#     db: Session = Depends(database.get_db),
-#     currentUser=Depends(oauth2.getCurrentUser),
-# ):
-#     if currentUser.role != "RESIDENT":
-#         raise HTTPException(status_code=401, detail="UNAUTHORIZED")
 
-#     user = db.query(models.User).filter(models.User.email == currentUser.email).first()
-
-#     user.name = edit.name
-#     user.phone = edit.phone
-#     user.address = edit.address
-#     user.image = edit.image
-
-#     db.commit()
-#     db.refresh(user)
-
-#     auth_subject = observer.AuthSubject()
-
-#     email_observer = observer.EmailNotificationObserver(user.email)
-#     audit_log_observer = observer.AuditLogObserver()
-
-#     auth_subject.add_observer(email_observer)
-#     auth_subject.add_observer(audit_log_observer)
-
-#     auth_subject.notify_observers(
-#         subject="Profile Updated",
-#         body=f"Profile updated successfully!",
-#     )
-
-#     return {"message": "SUCCESS"}
 
 @router.put("/editProfile", status_code=201)
-
 def editProfile(
     edit: schemas.UserEditProfile,
     db: Session = Depends(database.get_db),
-    currentUser=Depends(oauth2.getCurrentUser),
+    currentUser=Depends(checkingRole("COLLECTOR")),
 ):
-    if currentUser.role != "COLLECTOR":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
-
     user = db.query(models.User).filter(models.User.email == currentUser.email).first()
 
     if not user:
@@ -115,7 +79,6 @@ def editProfile(
 
     auth_subject = observer.AuthSubject()
 
-
     email_observer = observer.EmailNotificationObserver(user.email)
     audit_log_observer = observer.AuditLogObserver()
 
@@ -127,18 +90,78 @@ def editProfile(
         body=f"Hello {user.name}, Your profile has been updated successfully",
     )
 
-
     return {"message": "PROFILEUPDATED"}
 
 
 @router.get("/getWasteReports", status_code=200)
 def getWasteReports(
-    db: Session = Depends(database.get_db), currentUser=Depends(oauth2.getCurrentUser)
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(checkingRole("COLLECTOR")),
 ):
-    if currentUser.role != "COLLECTOR":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
-
-    reports = db.query(models.ReportWaste).filter(models.ReportWaste.status == "PENDING").all()
+    reports = (
+        db.query(models.ReportWaste)
+        .filter(models.ReportWaste.status == "PENDING")
+        .all()
+    )
 
     return reports
 
+
+class getReport(BaseModel):
+    area: str
+
+
+@router.get("/getReportsByArea", status_code=200)
+def getReportsByArea(
+    getReport: getReport,
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(checkingRole("COLLECTOR")),
+):
+    reports = (
+        db.query(models.ReportWaste)
+        .filter(models.ReportWaste.location == getReport.area)
+        .all()
+    )
+
+    return reports
+
+
+class Report(BaseModel):
+    report_id: int
+
+
+@router.post("/updateReportStatus", status_code=201)
+def updateReportStatus(
+    rep: Report,
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(checkingRole("COLLECTOR")),
+):
+    report = (
+        db.query(models.ReportWaste)
+        .filter(models.ReportWaste.id == rep.report_id)
+        .first()
+    )
+
+    if not report:
+        raise HTTPException(status_code=404, detail="REPORTNOTFOUND")
+
+    report.status = "RESOLVED"
+    report.collectedBy = currentUser.email
+    report.collectedAt = datetime.now()
+
+    db.commit()
+
+    auth_subject = observer.AuthSubject()
+
+    email_observer = observer.EmailNotificationObserver(report.email)
+    audit_log_observer = observer.AuditLogObserver()
+
+    auth_subject.add_observer(email_observer)
+    auth_subject.add_observer(audit_log_observer)
+
+    auth_subject.notify_observers(
+        subject="REPORTUPDATED",
+        body=f"Hello, Your report has been resolved successfully",
+    )
+
+    return {"message": "REPORTUPDATED"}

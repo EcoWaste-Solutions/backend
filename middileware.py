@@ -1,15 +1,17 @@
-import models
-import schemas
-import utils
+# middleware.py
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 import oauth2
 import database
-from fastapi import Depends, HTTPException, APIRouter
-from sqlalchemy.orm import Session
 
+def checkingRole(required_role: str):
+    """
+    Middleware to check the role of the current user.
+    """
+    def check_role(currentUser=Depends(oauth2.getCurrentUser), db: Session = Depends(database.get_db)):
+        if currentUser.role != required_role:
+            raise HTTPException(status_code=401, detail="UNAUTHORIZED")
+        return currentUser
 
-def checkingRole(currentUser, role):
-    if currentUser.role != role:
-        raise HTTPException(
-            status_code=401, detail="UNAUTHORIZED"
-        )
-    return True
+    return check_role

@@ -16,7 +16,7 @@ class UserFactory:
             email=resident.email,
             phone=resident.phone,
             name=resident.name,
-            role=resident.role,
+            role="RESIDENT",
             image=resident.image,
             address=resident.address,
             userName=utils.createUserName(resident.name),
@@ -52,17 +52,13 @@ class ReportWasteFactory:
             description=report.description,
             location=report.location,
             status="PENDING",
-            image=[url for url in report.image],
-            reward=10
+            image=report.image,
+            reward=10,
         )
-    
 
 
 class EdirtProfileFactory:
     def editProfile(user: schemas.UserEditProfile):
         return models.User(
-            name=user.name,
-            phone=user.phone,
-            address=user.address,
-            image=user.image
+            name=user.name, phone=user.phone, address=user.address, image=user.image
         )

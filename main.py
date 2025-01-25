@@ -19,10 +19,8 @@ manager = utils.connectionManager()
 
 
 origins = [
-    "http://localhost",
     "http://localhost:5173",
-    "http://localhost:3000",
-    "https://inventory.alvereduan.com"
+    "https://7cf8-118-179-97-81.ngrok-free.app"
 ]
 
 app.add_middleware(
