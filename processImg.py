@@ -119,6 +119,8 @@ def parse_image_details(extracted_text: str) -> dict:
         "other": other,
         "categoryPercentage": [int(x) for x in categoryPercentage.split(",")]
     }
+
+
 def process_image(image_data):
    
     extracted_text = extract_text(image_data)

@@ -47,7 +47,7 @@ class ResidentSignup(BaseModel):
     password: str
     address: str
     image: str
-    role: str
+
 
 
 class Signin(BaseModel):
@@ -58,7 +58,7 @@ class Signin(BaseModel):
 class ReportWaste(BaseModel):
     description: str
     location: str
-    image: List[str]
+    image: str
 
     class Config:
         orm_mode = True
@@ -74,7 +74,7 @@ class ReportWasteResponse(BaseModel):
     location: str
     status: str
     date: date
-    image: List[str]
+    image: str
     reward: int
 
     class Config:
@@ -103,6 +103,17 @@ class LeaderBoard(BaseModel):
 class UserEditProfile(BaseModel):
     name: str
     phone: str
+    address: str
+    image: str
+
+    class Config:
+        orm_mode = True
+
+
+class Collector(BaseModel):
+    email: str
+    phone: str
+    name: str
     address: str
     image: str
 

@@ -20,6 +20,7 @@ import requests
 
 import utils
 import observer
+from pydantic import BaseModel, EmailStr
 
 router = APIRouter(tags=["Resident"], prefix="/resident")
 
@@ -27,14 +28,18 @@ from middileware import checkingRole
 
 import processImg
 
+import qrcode
+import json
+import base64
+import io
+import hashlib
+
 
 @router.get("/getProfile", status_code=200, response_model=schemas.ResidentProfile)
 def getProfile(
-    db: Session = Depends(database.get_db), currentUser=Depends(oauth2.getCurrentUser)
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(checkingRole("RESIDENT")),
 ):
-    if currentUser.role != "RESIDENT":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
-
     user = db.query(models.User).filter(models.User.email == currentUser.email).first()
 
     if not user:
@@ -62,10 +67,8 @@ def getProfile(
 def getDescription(
     img: schemas.Only_image,
     db: Session = Depends(database.get_db),
-    currentUser=Depends(oauth2.getCurrentUser),
+    currentUser=Depends(checkingRole("RESIDENT")),
 ):
-    if currentUser.role != "RESIDENT":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
     response = requests.get(img.image)
     response.raise_for_status()
     image_data = base64.b64encode(response.content).decode("utf-8")
@@ -85,11 +88,8 @@ def getDescription(
 def reportWaste(  # path parameter to control description logic
     report: schemas.ReportWaste,  # report data, including the image URL
     db: Session = Depends(database.get_db),
-    currentUser=Depends(oauth2.getCurrentUser),
+    currentUser=Depends(checkingRole("RESIDENT")),
 ):
-    if currentUser.role != "RESIDENT":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
-
     # Retrieve the user from the database
     user = (
         db.query(models.Resident)
@@ -108,6 +108,7 @@ def reportWaste(  # path parameter to control description logic
     # Determine the description source based on the `desc` parameter
 
     # Create the report entry
+
     reportWaste = factory.ReportWasteFactory.createReportWaste(
         report, currentUser.email
     )
@@ -127,9 +128,6 @@ def reportWaste(  # path parameter to control description logic
     db.commit()
     db.refresh(reportWaste)
 
-    
-    
-   
     # Notify observers
     auth_subject = observer.AuthSubject()
     email_observer = observer.EmailNotificationObserver(currentUser.email)
@@ -148,28 +146,39 @@ def reportWaste(  # path parameter to control description logic
 
 @router.get("/getReports", status_code=200)
 def getReports(
-    db: Session = Depends(database.get_db), currentUser=Depends(oauth2.getCurrentUser)
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(checkingRole("RESIDENT")),
 ):
-    if currentUser.role != "RESIDENT":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
-
     reports = (
         db.query(models.ReportWaste)
         .filter(models.ReportWaste.email == currentUser.email)
         .all()
     )
 
-    return [reports]
+    response = []
+
+    for report in reports:
+        response.append(
+            schemas.ReportWasteResponse(
+                description=report.description,
+                location=report.location,
+                status=report.status,
+                date=report.date.date(),  # Extract only the date part
+                image=report.image,
+                reward=report.reward,
+            )
+        )
+
+    return response
 
 
 @router.put("/editProfile", status_code=201)
 def editProfile(
     edit: schemas.UserEditProfile,
     db: Session = Depends(database.get_db),
-    currentUser=Depends(oauth2.getCurrentUser),
+    currentUser=Depends(checkingRole("RESIDENT")),
 ):
-    if currentUser.role != "RESIDENT":
-        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
+   
 
     user = db.query(models.User).filter(models.User.email == currentUser.email).first()
 
@@ -193,5 +202,40 @@ def editProfile(
         subject="Profile Updated",
         body=f"Profile updated successfully!",
     )
+
+    return {"message": "SUCCESS"}
+
+
+class Reward(BaseModel):
+    reward: int
+
+
+@router.put("/reedemReward", status_code=201)
+def reedemReward(
+    reward: Reward,
+    db: Session = Depends(database.get_db),
+    currentUser=Depends(oauth2.getCurrentUser),
+):
+    if currentUser.role != "RESIDENT":
+        raise HTTPException(status_code=401, detail="UNAUTHORIZED")
+
+    user = (
+        db.query(models.Resident)
+        .filter(models.Resident.email == currentUser.email)
+        .first()
+    )
+    if reward.reward > user.reward:
+        raise HTTPException(status_code=400, detail="INSUFFICIENTREWARD")
+
+    if not user:
+        raise HTTPException(status_code=404, detail="USERNOTFOUND")
+
+    if user.reward < reward.reward:
+        raise HTTPException(status_code=400, detail="INSUFFICIENTREWARD")
+
+    user.reward -= reward.reward
+
+    db.commit()
+    db.refresh(user)
 
     return {"message": "SUCCESS"}

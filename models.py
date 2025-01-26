@@ -36,8 +36,14 @@ class ReportWaste(Base):
     location = Column(String)
     status = Column(String)
     date = Column(DateTime, default=datetime.utcnow)  # Changed to datetime.utcnow
-    image = Column(ARRAY(String), nullable=False)
+    image = Column(String, nullable=False)
     reward = Column(Integer)
+    qrCode = Column(String, nullable=True)
+    qrCodeUpdatedAt = Column(DateTime, nullable=True)
+    qrCodeAddedBy = Column(String, ForeignKey("users.email"), nullable=True)
+    qrCodeVerified = Column(Boolean, default=False)
+    collectedBy = Column(String, ForeignKey("collectors.email"), nullable=True)
+    collectedAt = Column(DateTime, nullable=True)
 
 
 class ForgotPassword(Base):
@@ -48,3 +54,10 @@ class ForgotPassword(Base):
 
 
 
+class Collector(Base):
+    __tablename__ = "collectors"
+    email = Column(String, ForeignKey("users.email"), primary_key=True)
+    phone = Column(String)
+    name = Column(String)
+    reward = Column(Integer, default=0)
+    isAvailable = Column(Boolean, default=True)
