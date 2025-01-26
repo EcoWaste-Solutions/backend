@@ -18,9 +18,13 @@ app = FastAPI()
 manager = utils.connectionManager()
 
 
+@app.get("/ping")
+async def ping():
+    return {"message": "pong"}
+
 origins = [
     "http://localhost:5173",
-    "https://7cf8-118-179-97-81.ngrok-free.app"
+    "https://4873-103-221-253-100.ngrok-free.app"
 ]
 
 app.add_middleware(
